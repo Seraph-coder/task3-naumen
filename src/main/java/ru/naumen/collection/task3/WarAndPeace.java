@@ -3,7 +3,7 @@ package ru.naumen.collection.task3;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -25,7 +25,7 @@ public class WarAndPeace
     /**
      * Хеш-таблица для хранения уникальных слов и их частоты встречаемости
      */
-    private static final HashMap<String, Integer> wordCount = new HashMap<>();
+    private static final LinkedHashMap<String, Integer> wordCount = new LinkedHashMap<>();
 
     /**
      * Мини-куча для хранения 10 наименее используемых слов (по значению счетчика)
