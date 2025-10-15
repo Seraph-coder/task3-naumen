@@ -1,9 +1,6 @@
 package ru.naumen.collection.task2;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Дано:
@@ -39,20 +36,13 @@ public class Task2
      * <p>
      *     Принцип работы:
      *     <ul>
-     *         <li>Вычисляется размер обеих коллекций и их отношение</li>
-     *         <li>Если отношение размеров больше 2, то меньшая коллекция
-     *         преобразуется в HashSet, и по нему фильтруется большая коллекция</li>
-     *         <li>Если отношение размеров меньше или равно 2, то первая
-     *         коллекция преобразуется в HashSet, и по нему фильтруется вторая коллекция</li>
+     *         <li>Вычисляется размер обеих коллекций</li>
+     *         <li>Меньшая коллекция преобразуется в HashSet, и по ней
+     *         фильтруется большая коллекция</li>
      *     </ul>
-     *     Такой подход позволяет оптимизировать работу метода при значительной разнице в размерах
-     *     коллекций, сохраняя при этом хорошую производительность при близких размерах.
      *     <br>
      *     Временная сложность в худшем случае: O(n + m), где n и m - размеры коллекций.
      *     Пространственная сложность: O(min(n, m)) для хранения меньшей коллекции в HashSet.
-     *     <br>
-     *     Таким образом, метод эффективно находит дубликаты пользователей в обеих коллекциях
-     *     с оптимальной производительностью.
      *     </p>
      *     <P>
      *         Причина выбора коллекции HashSet:
@@ -71,36 +61,18 @@ public class Task2
      * @return список дубликатов
      */
     public static List<User> findDuplicates(Collection<User> collA, Collection<User> collB) {
-        final double SIGNIFICANT_RATIO = 2.0;
-
-        double sizeA = collA.size();
-        double sizeB = collB.size();
-
-        if (sizeA == 0 || sizeB == 0) {
-            return List.of();
-        }
-
-        double ratio = Math.max(sizeA, sizeB) / Math.min(sizeA, sizeB);
-
-        if (ratio > SIGNIFICANT_RATIO) {
-            Collection<User> smallerCol = sizeA > sizeB ? collB : collA;
-            Collection<User> largerCol = sizeA > sizeB ? collA : collB;
-
-            Set<User> smallerSet = new HashSet<>(smallerCol);
-
-            return findCommonUsers(largerCol, smallerSet);
+        if (collA.size() <= collB.size()) {
+            return findCommonUsers(collB, new HashSet<>(collA));
         } else {
-
-            Set<User> setA = new HashSet<>(collA);
-
-            return findCommonUsers(collB, setA);
+            return findCommonUsers(collA, new HashSet<>(collB));
         }
+
     }
     /**
      * Находит общих пользователей между коллекцией и множеством
      * <br>
      * <p>Принцип работы:
-     * Берём коллекцию пользователей для проверки и фильтруем её,
+     * Проходимся по коллекцию пользователей для проверки и фильтруем её,
      * оставляя только тех пользователей, которые содержатся в множестве.
      * Использование множества (Set) позволяет эффективно проверять наличие
      * пользователя благодаря быстрому доступу по хешу.</p>
@@ -114,16 +86,20 @@ public class Task2
      * так как дополнительная память используется только для хранения
      * результата.
      * </p>
-     * Таким образом, метод эффективно находит общих пользователей
-     * между коллекцией и множеством с оптимальной производительностью.
      *
      * @param usersToCheck коллекция пользователей для проверки
      * @param userSet множество пользователей для сравнения
      * @return список общих пользователей
      */
     private static List<User> findCommonUsers (Collection<User> usersToCheck, Set<User> userSet) {
-        return  usersToCheck.stream()
-                .filter(userSet::contains)
-                .toList();
+        List<User> result = new ArrayList<>();
+
+        for (User user : usersToCheck) {
+            if (userSet.contains(user)) {
+                result.add(user);
+            }
+        }
+
+        return result;
     }
 }
