@@ -1,11 +1,8 @@
 package ru.naumen.collection.task3;
 
-import javax.swing.*;
-import java.awt.*;
+
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * <p>Написать консольное приложение, которое принимает на вход произвольный текстовый файл в формате txt.
@@ -41,13 +38,13 @@ public class WarAndPeace
      * для low10 и с наименьшим значением для high10, что позволяет эффективно
      * поддерживать только 10 наименее и наиболее используемых слов соответственно.
      */
-    private static final PriorityQueue<Map.Entry<String, Integer>> low10 =
+    private static final PriorityQueue<Map.Entry<String, Integer>> top10 =
             new PriorityQueue<>(
                     (a, b) ->
                             b.getValue().compareTo(a.getValue())
             );
 
-    private static final PriorityQueue<Map.Entry<String, Integer>> high10 =
+    private static final PriorityQueue<Map.Entry<String, Integer>> last10 =
             new PriorityQueue<>(
                     Map.Entry.comparingByValue()
             );
@@ -70,32 +67,36 @@ public class WarAndPeace
                 .forEachWord(word -> wordCount.merge(word, 1, Integer::sum));
 
         counter();
-        showResults(high10, low10);
+        showResults(last10, top10);
     }
 
     /**
      * Заполняет две кучи (минимальную и максимальную) на основе данных из хеш-таблицы
-     * <p>
      * Алгоритм:
-     *     <ul>
-     *         <li>Для каждого элемента в хеш-таблице добавить его в обе кучи</li>
-     *         <li>Если размер кучи превышает 10, удалить корневой элемент
-     *         (минимальный для high10 и максимальный для low10)</li>
-     *     </ul>
-     *     Таким образом, в каждой куче будут храниться только 10 наиболее и наименее используемых слов соответственно.
-     * </p>
-     * Сложность алгоритма: O(n log k), где n - количество уникальных слов, k - размер кучи (10 в данном случае).
-     * Выбор алгоритма обоснован практической эффективностью:
-     * использование куч позволяет эффективно поддерживать топ-k элементов
-     * без необходимости сортировки всех элементов, что особенно важно при большом количестве уникальных слов.
+     * <ul>
+     *     <li>Для каждой записи в хеш-таблице проверить, можно ли добавить ее в кучу</li>
+     *     <li>Если размер кучи меньше 10, просто добавить запись</li>
+     *     <li>Если размер кучи равен 10, сравнить значение текущей записи с корневым элементом кучи
+     *     (наибольшим для минимальной кучи и наименьшим для максимальной кучи)</li>
+     *     <li>Если значение текущей записи больше корневого элемента минимальной кучи
+     *     или меньше корневого элемента максимальной кучи, заменить корневой элемент на текущую запись</li>
+     * </ul>
      */
     private static void counter() {
         for (Map.Entry<String, Integer> entry : WarAndPeace.wordCount.entrySet()) {
-            WarAndPeace.high10.offer(entry);
-            WarAndPeace.low10.offer(entry);
+            if (last10.size() < 10) {
+                last10.offer(entry);
+            } else if (entry.getValue() > last10.peek().getValue()) {
+                last10.poll();
+                last10.offer(entry);
+            }
 
-            if (WarAndPeace.high10.size() > 10) WarAndPeace.high10.poll();
-            if (WarAndPeace.low10.size() > 10) WarAndPeace.low10.poll();
+            if (top10.size() < 10) {
+                top10.offer(entry);
+            } else if (entry.getValue() < top10.peek().getValue()) {
+                top10.poll();
+                top10.offer(entry);
+            }
         }
     }
 
@@ -104,9 +105,8 @@ public class WarAndPeace
      * <p>
      *     Алгоритм:
      *     <ul>
-     *         <li>Создать окно с текстовой областью</li>
      *         <li>Сформировать строку с результатами из содержимого куч</li>
-     *         <li>Отобразить окно с результатами</li>
+     *         <li>Вывести содержимое в консоль</li>
      *     </ul>
      * </p>
      * @param high10 минимальная куча для хранения 10 наиболее используемых слов
@@ -114,31 +114,28 @@ public class WarAndPeace
      */
     public static void showResults(PriorityQueue<Map.Entry<String, Integer>> high10,
                                    PriorityQueue<Map.Entry<String, Integer>> low10) {
-        JFrame frame = new JFrame("Статистика слов");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setMinimumSize(new Dimension(400, 600));
+        List<Map.Entry<String, Integer>> topList = new ArrayList<>(high10);
+        topList.sort((a, b) -> b.getValue().compareTo(a.getValue()));
 
-        JTextArea textArea = new JTextArea(20, 35);
-        textArea.setEditable(false);
-        textArea.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        List<Map.Entry<String, Integer>> lowList = new ArrayList<>(low10);
+        lowList.sort(Map.Entry.comparingByValue());
 
         StringBuilder sb = new StringBuilder();
+
         sb.append("TOP 10 наиболее используемых слов:\n\n");
-        high10.stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .forEach(e -> sb.append(e
-                        .getKey()).append(" - ").append(e.getValue()).append(" раз(а)\n"));
+
+        for (Map.Entry<String, Integer> entry : topList) {
+            sb.append(entry.getKey()).append(" - ")
+                    .append(entry.getValue()).append(" раз(а)\n");
+        }
 
         sb.append("\n10 наименее используемых:\n\n");
-        low10.stream()
-                .sorted(Map.Entry.comparingByValue())
-                .forEach(e -> sb.append(e
-                        .getKey()).append(" - ").append(e.getValue()).append(" раз(а)\n"));
 
-        textArea.setText(sb.toString());
-        frame.add(new JScrollPane(textArea));
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        for (Map.Entry<String, Integer> entry : lowList) {
+            sb.append(entry.getKey()).append(" - ")
+                    .append(entry.getValue()).append(" раз(а)\n");
+        }
+
+        System.out.println(sb);
     }
 }
