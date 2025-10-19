@@ -22,32 +22,15 @@ public class WarAndPeace
     /**
      * Хеш-таблица для хранения уникальных слов и их частоты встречаемости
      */
-    private static final LinkedHashMap<String, Integer> wordCount = new LinkedHashMap<>();
+    private final Map<String, Integer> wordCount;
 
     /**
      * Мини-куча для хранения 10 наименее используемых слов (по значению счетчика)
      * и Макси-куча для хранения 10 наиболее используемых слов (по значению счетчика)
-     * <p>
-     * В PriorityQueue первый элемент - наименьший (минимальный) по заданному компаратору.
-     * Поэтому для low10 (наименее используемых) используется компаратор, который упорядочивает
-     * элементы по убыванию (от большего к меньшему), чтобы на вершине очереди был элемент с наибольшим значением.
-     * Для high10 (наиболее используемых) используется естественный порядок (по возрастанию),
-     * чтобы на вершине очереди был элемент с наименьшим значением.
-     * <p>
-     * Таким образом, когда размер очереди превышает 10, удаляется элемент с наибольшим значением
-     * для low10 и с наименьшим значением для high10, что позволяет эффективно
-     * поддерживать только 10 наименее и наиболее используемых слов соответственно.
      */
-    private static final PriorityQueue<Map.Entry<String, Integer>> top10 =
-            new PriorityQueue<>(
-                    (a, b) ->
-                            b.getValue().compareTo(a.getValue())
-            );
+    private final PriorityQueue<Map.Entry<String, Integer>> top10;
 
-    private static final PriorityQueue<Map.Entry<String, Integer>> last10 =
-            new PriorityQueue<>(
-                    Map.Entry.comparingByValue()
-            );
+    private final PriorityQueue<Map.Entry<String, Integer>> last10;
 
     /**
      * Точка входа в программу
@@ -63,10 +46,35 @@ public class WarAndPeace
      * @param args аргументы командной строки (не используются)
      */
     public static void main(String[] args) {
+        WarAndPeace app = new WarAndPeace();
+        app.run();
+    }
+
+    /**
+     * Конструктор класса WarAndPeace, который инициализирует необходимые
+     * для решения задачи структуры данных
+     * LinkedHashMap для хранения слов и их частоты встречаемости (реализация
+     * выбрана из-за скорости итерации по записям)
+     * PriorityQueue для хранения 10 наиболее и наименее используемых слов
+     * (реализация выбрана из-за эффективного доступа к минимальному и
+     * максимальному элементам)
+     */
+    public WarAndPeace() {
+        this.wordCount = new LinkedHashMap<>();
+        this.top10 = new PriorityQueue<>(11,
+                (a, b) ->
+                        b.getValue().compareTo(a.getValue())
+        );
+        this.last10 = new PriorityQueue<>(11,
+                Map.Entry.comparingByValue()
+        );
+    }
+
+    public void run() {
         new WordParser(WAR_AND_PEACE_FILE_PATH)
                 .forEachWord(word -> wordCount.merge(word, 1, Integer::sum));
 
-        counter();
+        populatePriorityQueues(wordCount, top10, last10);
         showResults(last10, top10);
     }
 
@@ -82,8 +90,10 @@ public class WarAndPeace
      *     или меньше корневого элемента максимальной кучи, заменить корневой элемент на текущую запись</li>
      * </ul>
      */
-    private static void counter() {
-        for (Map.Entry<String, Integer> entry : WarAndPeace.wordCount.entrySet()) {
+    private static void populatePriorityQueues(Map<String, Integer> wordCount,
+                                               PriorityQueue<Map.Entry<String, Integer>> top10,
+                                               PriorityQueue<Map.Entry<String, Integer>> last10) {
+        for (Map.Entry<String, Integer> entry : wordCount.entrySet()) {
             if (last10.size() < 10) {
                 last10.offer(entry);
             } else if (entry.getValue() > last10.peek().getValue()) {
@@ -101,16 +111,7 @@ public class WarAndPeace
     }
 
     /**
-     * Отображает результаты в графическом окне
-     * <p>
-     *     Алгоритм:
-     *     <ul>
-     *         <li>Сформировать строку с результатами из содержимого куч</li>
-     *         <li>Вывести содержимое в консоль</li>
-     *     </ul>
-     * </p>
-     * @param high10 минимальная куча для хранения 10 наиболее используемых слов
-     * @param low10 максимальная куча для хранения 10 наименее используемых слов
+     * Отображает результаты в консоли
      */
     public static void showResults(PriorityQueue<Map.Entry<String, Integer>> high10,
                                    PriorityQueue<Map.Entry<String, Integer>> low10) {
