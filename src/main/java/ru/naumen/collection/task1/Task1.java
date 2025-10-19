@@ -37,7 +37,7 @@ public class Task1
      * реализованные методы {@code equals()} и {@code hashCode()}.
      * В худшем случае (много коллизий) сложность может достигать <b>O(n)</b></p>
      */
-    Map<Ticket, Goods> internetService = new HashMap<>();
+    private Map<Ticket, Goods> internetService = new HashMap<>();
 
     public enum Goods {
         /**
